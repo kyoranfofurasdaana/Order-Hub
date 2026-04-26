@@ -28,7 +28,7 @@ TitleBar.BorderSizePixel = 0
 local TitleText = Instance.new("TextLabel", TitleBar)
 TitleText.Size = UDim2.new(1, -10, 1, 0)
 TitleText.Position = UDim2.new(0, 8, 0, 0)
-TitleText.Text = "Order Hub | v3.52.6"
+TitleText.Text = "Aztup Hub | v3.52.6"
 TitleText.TextColor3 = Color3.fromRGB(180, 180, 180)
 TitleText.TextSize = 13
 TitleText.Font = Enum.Font.Code
@@ -50,7 +50,7 @@ FishBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 FishBtn.BorderSizePixel = 1
 FishBtn.BorderColor3 = Color3.fromRGB(40, 40, 40)
 FishBtn.Text = "  ■ Auto Fishing"
-FishBtn.TextColor3 = Color3.fromRGB(255, 50, 50) -- Começa Vermelho
+FishBtn.TextColor3 = Color3.fromRGB(255, 50, 50) -- Começa Vermelho (desativado)
 FishBtn.TextSize = 14
 FishBtn.Font = Enum.Font.Code
 FishBtn.TextXAlignment = Enum.TextXAlignment.Left
@@ -98,136 +98,189 @@ DragHandle.TextSize = 10
 DragHandle.Font = Enum.Font.Code
 DragHandle.Draggable = true
 
--- [[ ESP MELHORADO PARA ITENS COLETÁVEIS ]]
-local ESP_Ativo = false
-local itensESP = {
-    {nome = "Metal Scrap", cor = Color3.fromRGB(0, 255, 0)}, -- Verde neon
-    -- Adicione mais itens aqui: {nome = "ItemName", cor = Color3.fromRGB(r,g,b)}
-}
-local ESP_Connections = {}
+-- [[ CONFIGURAÇÃO DO DROPDOWN ESP ]]
 
-local function criarESP(objeto, cor)
-    if objeto:FindFirstChild("ESPHighlight") then return end
-    local highlight = Instance.new("Highlight")
-    highlight.Name = "ESPHighlight"
-    highlight.Parent = objeto
-    highlight.FillColor = cor
-    highlight.FillTransparency = 0.5
-    highlight.OutlineColor = Color3.new(1, 1, 1)
-    highlight.OutlineTransparency = 0
-    highlight.Adornee = objeto
-end
-
-local function removerESP(objeto)
-    local h = objeto:FindFirstChild("ESPHighlight")
-    if h then h:Destroy() end
-end
-
-local function monitorarItensESP()
-    -- Limpa conexões antigas
-    for _, conn in ipairs(ESP_Connections) do pcall(function() conn:Disconnect() end) end
-    table.clear(ESP_Connections)
-    
+-- Função para buscar itens disponíveis dinamicamente
+local function buscarItensDropaveis()
+    local nomesUnicos = {}
+    local jaAdicionados = {}
     local collectables = game.Workspace:FindFirstChild("Collectables")
-    if not collectables then return end
-    
-    -- Destaca os itens já existentes
-    for _, pasta in ipairs(collectables:GetChildren()) do
-        for _, config in ipairs(itensESP) do
-            if pasta.Name == config.nome then
-                for _, item in ipairs(pasta:GetChildren()) do
-                    criarESP(item, config.cor)
+    if collectables then
+        for _, pasta in ipairs(collectables:GetChildren()) do
+            if pasta:IsA("Folder") or pasta:IsA("Model") then
+                for _, obj in ipairs(pasta:GetChildren()) do
+                    if obj.Name and not jaAdicionados[obj.Name] then
+                        table.insert(nomesUnicos, obj.Name)
+                        jaAdicionados[obj.Name] = true
+                    end
                 end
             end
         end
     end
-    -- Monitora novos itens
-    table.insert(ESP_Connections, collectables.DescendantAdded:Connect(function(descendant)
-        task.wait(0.2)
-        for _, config in ipairs(itensESP) do
-            if descendant.Parent and descendant.Parent.Name == config.nome then
-                criarESP(descendant, config.cor)
-            end
+    return nomesUnicos
+end
+
+local itensDisponiveis = buscarItensDropaveis()
+
+local itemSelecionado = ""
+local ESP_Ativo = false
+local ESP_Connections = {}
+
+-- 1. BOTÃO PRINCIPAL
+local DropdownMain = Instance.new("TextButton", Container)
+DropdownMain.Size = UDim2.new(1, 0, 0, 30)
+DropdownMain.Position = UDim2.new(0, 0, 0, 80)
+DropdownMain.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+DropdownMain.BorderSizePixel = 1
+DropdownMain.BorderColor3 = Color3.fromRGB(40, 40, 40)
+DropdownMain.Text = "  ▼ SELECIONAR ITEM ESP"
+DropdownMain.TextColor3 = Color3.fromRGB(200, 200, 200)
+DropdownMain.TextSize = 14
+DropdownMain.Font = Enum.Font.Code
+DropdownMain.TextXAlignment = Enum.TextXAlignment.Left
+
+-- 2. LISTA (ScrollingFrame)
+local ListFrame = Instance.new("ScrollingFrame", MainFrame)
+ListFrame.Size = UDim2.new(0, 200, 0, 150)
+ListFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+ListFrame.BorderSizePixel = 1
+ListFrame.BorderColor3 = Color3.fromRGB(45, 45, 45)
+ListFrame.Visible = false
+ListFrame.ZIndex = 100
+ListFrame.ScrollBarThickness = 5
+ListFrame.ClipsDescendants = false -- Para debug visual
+ListFrame.CanvasSize = UDim2.new(0, 0, 0, #itensDisponiveis * 30 + 10)
+
+local UIList = Instance.new("UIListLayout")
+UIList.Parent = ListFrame
+UIList.Padding = UDim.new(0, 2)
+
+-- 3. FUNÇÃO DE ATUALIZAR ESP
+local function criarHighlight(item)
+    local h = item:FindFirstChild("ESPHighlight")
+    if not h then
+        h = Instance.new("Highlight")
+        h.Name = "ESPHighlight"
+        h.Parent = item
+    end
+    h.FillColor = Color3.fromRGB(0, 255, 127)
+    h.FillTransparency = 0.5
+    h.OutlineColor = Color3.new(1, 1, 1)
+    h.OutlineTransparency = 0
+    h.Adornee = item
+    h.Enabled = true
+end
+
+local function limparESP()
+    for _, obj in ipairs(game.Workspace:GetDescendants()) do
+        if obj:FindFirstChild("ESPHighlight") then
+            obj.ESPHighlight:Destroy()
         end
-    end))
-    -- Remove ESP se o item sumir
-    table.insert(ESP_Connections, collectables.DescendantRemoving:Connect(function(descendant)
-        removerESP(descendant)
-    end))
+    end
 end
 
 local function ativarESP()
+    limparESP()
     ESP_Ativo = true
-    monitorarItensESP()
+    local collectables = game.Workspace:FindFirstChild("Collectables")
+    if collectables then
+        -- Destaca todos os objetos com o nome selecionado em todas as pastas
+        for _, pasta in ipairs(collectables:GetChildren()) do
+            if pasta:IsA("Folder") or pasta:IsA("Model") then
+                for _, item in ipairs(pasta:GetChildren()) do
+                    if item.Name == itemSelecionado then
+                        criarHighlight(item)
+                    end
+                end
+            end
+        end
+        -- Destaca novos drops com o nome selecionado
+        table.insert(ESP_Connections, collectables.DescendantAdded:Connect(function(desc)
+            task.wait(0.1)
+            if desc.Name == itemSelecionado then
+                criarHighlight(desc)
+            end
+        end))
+    end
+    DropdownMain.TextColor3 = Color3.fromRGB(0, 255, 127)
+    DropdownMain.Text = "  ■ ESP ATIVO: " .. itemSelecionado
+    DebugLabel.Text = "> ESP: " .. itemSelecionado .. " ATIVO"
 end
 
 local function desativarESP()
     ESP_Ativo = false
     for _, conn in ipairs(ESP_Connections) do pcall(function() conn:Disconnect() end) end
     table.clear(ESP_Connections)
-    -- Remove highlights existentes
-    local collectables = game.Workspace:FindFirstChild("Collectables")
-    if collectables then
-        for _, pasta in ipairs(collectables:GetChildren()) do
-            for _, item in ipairs(pasta:GetChildren()) do
-                removerESP(item)
-            end
+    limparESP()
+    DropdownMain.TextColor3 = Color3.fromRGB(200, 200, 200)
+    DropdownMain.Text = "  ▼ SELECIONAR ITEM ESP"
+    DebugLabel.Text = "> ESP Desativado"
+end
+
+-- 4. CRIAR ITENS DA LISTA
+
+-- Função para popular a lista dinamicamente
+local function atualizarListaItens()
+    -- Limpa itens antigos
+    for _, child in ipairs(ListFrame:GetChildren()) do
+        if child:IsA("TextButton") then
+            child:Destroy()
         end
+    end
+    itensDisponiveis = buscarItensDropaveis()
+    print("[DEBUG] Itens encontrados na busca:")
+    for _, nome in ipairs(itensDisponiveis) do
+        print("  - " .. nome)
+    end
+    ListFrame.CanvasSize = UDim2.new(0, 0, 0, #itensDisponiveis * 30 + 10)
+    for _, nome in ipairs(itensDisponiveis) do
+        local ItemBtn = Instance.new("TextButton")
+        ItemBtn.Parent = ListFrame
+        ItemBtn.Size = UDim2.new(1, 0, 0, 28)
+        ItemBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+        ItemBtn.BorderSizePixel = 0
+        ItemBtn.Text = "  " .. nome
+        ItemBtn.TextColor3 = Color3.new(1, 1, 1)
+        ItemBtn.TextSize = 12
+        ItemBtn.Font = Enum.Font.Code
+        ItemBtn.TextXAlignment = Enum.TextXAlignment.Left
+        ItemBtn.ZIndex = 101
+
+        ItemBtn.MouseButton1Click:Connect(function()
+            if ESP_Ativo and itemSelecionado == nome then
+                desativarESP()
+            else
+                itemSelecionado = nome
+                ativarESP()
+            end
+            ListFrame.Visible = false
+        end)
+        ItemBtn.MouseEnter:Connect(function()
+            ItemBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+        end)
+        ItemBtn.MouseLeave:Connect(function()
+            ItemBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+        end)
     end
 end
 
--- Botão no hub para ativar/desativar ESP
-local ESPBtn = Instance.new("TextButton", Container)
-ESPBtn.Size = UDim2.new(1, 0, 0, 30)
-ESPBtn.Position = UDim2.new(0, 0, 0, 80)
-ESPBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-ESPBtn.BorderSizePixel = 1
-ESPBtn.BorderColor3 = Color3.fromRGB(40, 40, 40)
-ESPBtn.Text = "  ■ ESP Itens Coletáveis"
-ESPBtn.TextColor3 = Color3.fromRGB(0, 255, 0)
-ESPBtn.TextSize = 14
-ESPBtn.Font = Enum.Font.Code
-ESPBtn.TextXAlignment = Enum.TextXAlignment.Left
-
-ESPBtn.MouseButton1Click:Connect(function()
-    if ESP_Ativo then
-        desativarESP()
-        ESPBtn.TextColor3 = Color3.fromRGB(0, 255, 0)
-        ESPBtn.Text = "  ■ ESP Itens Coletáveis"
-        DebugLabel.Text = "> Status: ESP Desativado"
-    else
-        ativarESP()
-        ESPBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-        ESPBtn.Text = "  ■ ESP Ativo!"
-        DebugLabel.Text = "> Status: ESP Ativo"
+-- 5. LÓGICA DE ABRIR/FECHAR
+DropdownMain.MouseButton1Click:Connect(function()
+    ListFrame.Visible = not ListFrame.Visible
+    if ListFrame.Visible then
+        atualizarListaItens()
+        -- Posição relativa ao MainFrame: logo abaixo do DropdownMain
+        ListFrame.Position = UDim2.new(
+            DropdownMain.Position.X.Scale,
+            DropdownMain.Position.X.Offset,
+            DropdownMain.Position.Y.Scale,
+            DropdownMain.Position.Y.Offset + DropdownMain.Size.Y.Offset
+        )
     end
 end)
 
 -- Opcional: Ativar ESP automaticamente ao iniciar
--- ativarESP()
 
--- [[ LÓGICA DE FUNCIONAMENTO ]]
-
-local function clicarNaZona()
-    local centroX = ZoneFrame.AbsolutePosition.X + (ZoneFrame.AbsoluteSize.X / 2)
-    local centroY = ZoneFrame.AbsolutePosition.Y + (ZoneFrame.AbsoluteSize.Y / 2)
-    vim:SendMouseButtonEvent(centroX, centroY, 0, true, game, 0)
-    task.wait(0.1)
-    vim:SendMouseButtonEvent(centroX, centroY, 0, false, game, 0)
-end
-
--- Toggle Pesca
-FishBtn.MouseButton1Click:Connect(function()
-    _G.AutoFishing = not _G.AutoFishing
-    ZoneFrame.Visible = _G.AutoFishing
-    if _G.AutoFishing then
-        FishBtn.TextColor3 = Color3.fromRGB(0, 255, 127) -- Verde Neon
-        DebugLabel.Text = "> Status: Fishing Active"
-    else
-        FishBtn.TextColor3 = Color3.fromRGB(255, 50, 50) -- Vermelho
-        DebugLabel.Text = "> Status: Stopped"
-    end
-end)
 
 -- Lógica Teleporte (Tween atravessa paredes)
 TPBtn.MouseButton1Click:Connect(function()
@@ -248,6 +301,48 @@ TPBtn.MouseButton1Click:Connect(function()
             DebugLabel.Text = "> Status: Destination Reached"
         end)
     end
+end)
+
+-- Função para teleportar o jogador até o meteoro
+local function teleportarParaMeteor()
+    local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+    local meteor = game:GetService("Workspace"):FindFirstChild("MeteoriteFragmentModel")
+
+    if hrp and meteor then
+        DebugLabel.Text = "> Status: Teleporting to Meteor..."
+        local destino = meteor.PrimaryPart and meteor.PrimaryPart.CFrame or meteor.CFrame
+        local tempo = (hrp.Position - destino.Position).Magnitude / 60
+        local tween = TweenService:Create(hrp, TweenInfo.new(tempo, Enum.EasingStyle.Linear), {CFrame = destino})
+
+        local bv = Instance.new("BodyVelocity", hrp)
+        bv.Velocity = Vector3.new(0, 0, 0)
+        bv.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+
+        tween:Play()
+        tween.Completed:Connect(function()
+            bv:Destroy()
+            DebugLabel.Text = "> Status: Reached Meteor"
+        end)
+    else
+        DebugLabel.Text = "> Status: Meteor not found or player not ready"
+    end
+end
+
+-- Botão para teleportar para o meteoro
+local MeteorTPBtn = Instance.new("TextButton", Container)
+MeteorTPBtn.Size = UDim2.new(1, 0, 0, 30)
+MeteorTPBtn.Position = UDim2.new(0, 0, 0, 120)
+MeteorTPBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+MeteorTPBtn.BorderSizePixel = 1
+MeteorTPBtn.BorderColor3 = Color3.fromRGB(40, 40, 40)
+MeteorTPBtn.Text = "  ■ TP to Meteor"
+MeteorTPBtn.TextColor3 = Color3.fromRGB(0, 255, 127)
+MeteorTPBtn.TextSize = 14
+MeteorTPBtn.Font = Enum.Font.Code
+MeteorTPBtn.TextXAlignment = Enum.TextXAlignment.Left
+
+MeteorTPBtn.MouseButton1Click:Connect(function()
+    teleportarParaMeteor()
 end)
 
 -- Loop de Pesca (Seu sistema original corrigido)
