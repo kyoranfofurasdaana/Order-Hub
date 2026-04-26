@@ -1,18 +1,20 @@
 -- [[ CONFIGURAÇÕES DO SCRIPT ]]
 _G.AutoFishing = false
+_G.MasteryFarm = false
 local tempoReinicio = 2
 local player = game.Players.LocalPlayer
 local vim = game:GetService("VirtualInputManager")
 local camera = game.Workspace.CurrentCamera
 local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
 
 -- [[ INTERFACE ESTILO AZTUP HUB ]]
 local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
 
 -- Frame Principal (Design Escuro)
 local MainFrame = Instance.new("Frame", ScreenGui)
-MainFrame.Size = UDim2.new(0, 350, 0, 250)
-MainFrame.Position = UDim2.new(0.5, -175, 0.5, -125)
+MainFrame.Size = UDim2.new(0, 350, 0, 300)
+MainFrame.Position = UDim2.new(0.5, -175, 0.5, -150)
 MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15) -- Fundo Aztup
 MainFrame.BorderSizePixel = 1
 MainFrame.BorderColor3 = Color3.fromRGB(45, 45, 45)
@@ -28,7 +30,7 @@ TitleBar.BorderSizePixel = 0
 local TitleText = Instance.new("TextLabel", TitleBar)
 TitleText.Size = UDim2.new(1, -10, 1, 0)
 TitleText.Position = UDim2.new(0, 8, 0, 0)
-TitleText.Text = "Order Hub | v3.52.6"
+TitleText.Text = "Order Hub | v1.0"
 TitleText.TextColor3 = Color3.fromRGB(180, 180, 180)
 TitleText.TextSize = 13
 TitleText.Font = Enum.Font.Code
@@ -83,6 +85,33 @@ TPBtn.TextSize = 14
 TPBtn.Font = Enum.Font.Code
 TPBtn.TextXAlignment = Enum.TextXAlignment.Left
 
+-- Botão Mastery Farm
+local MasteryBtn = Instance.new("TextButton", Container)
+MasteryBtn.Size = UDim2.new(1, 0, 0, 30)
+MasteryBtn.Position = UDim2.new(0, 0, 0, 160)
+MasteryBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+MasteryBtn.BorderSizePixel = 1
+MasteryBtn.BorderColor3 = Color3.fromRGB(40, 40, 40)
+MasteryBtn.Text = "  ■ Mastery Farm"
+MasteryBtn.TextColor3 = Color3.fromRGB(255, 50, 50) -- Começa Vermelho
+MasteryBtn.TextSize = 14
+MasteryBtn.Font = Enum.Font.Code
+MasteryBtn.TextXAlignment = Enum.TextXAlignment.Left
+
+-- Toggle Mastery Farm
+MasteryBtn.MouseButton1Click:Connect(function()
+    _G.MasteryFarm = not _G.MasteryFarm
+    if _G.MasteryFarm then
+        MasteryBtn.Text = "  ■ Mastery Farm (ON)"
+        MasteryBtn.TextColor3 = Color3.fromRGB(0, 255, 127)
+        DebugLabel.Text = "> Mastery Farm: ATIVO"
+    else
+        MasteryBtn.Text = "  ■ Mastery Farm"
+        MasteryBtn.TextColor3 = Color3.fromRGB(255, 50, 50)
+        DebugLabel.Text = "> Mastery Farm: DESATIVADO"
+    end
+end)
+
 -- Debug Label (Status)
 local DebugLabel = Instance.new("TextLabel", Container)
 DebugLabel.Size = UDim2.new(1, 0, 0, 20)
@@ -93,6 +122,42 @@ DebugLabel.TextColor3 = Color3.fromRGB(120, 120, 120)
 DebugLabel.TextSize = 12
 DebugLabel.TextXAlignment = Enum.TextXAlignment.Left
 DebugLabel.Font = Enum.Font.Code
+
+-- [[ NOTIFICAÇÃO FLUTUANTE DE TECLAS (MASTERY FARM) ]]
+local KeyNotificationGui = Instance.new("ScreenGui", game.CoreGui)
+KeyNotificationGui.Name = "MasteryKeyNotif"
+KeyNotificationGui.ResetOnSpawn = false
+
+local KeyNotifFrame = Instance.new("Frame", KeyNotificationGui)
+KeyNotifFrame.Size = UDim2.new(0, 280, 0, 80)
+KeyNotifFrame.Position = UDim2.new(1, -300, 0, 20)
+KeyNotifFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+KeyNotifFrame.BorderSizePixel = 2
+KeyNotifFrame.BorderColor3 = Color3.fromRGB(0, 255, 127)
+KeyNotifFrame.Visible = false
+
+local KeyNotifCorner = Instance.new("UICorner", KeyNotifFrame)
+KeyNotifCorner.CornerRadius = UDim.new(0, 8)
+
+local KeyNotifTitle = Instance.new("TextLabel", KeyNotifFrame)
+KeyNotifTitle.Size = UDim2.new(1, -10, 0, 25)
+KeyNotifTitle.Position = UDim2.new(0, 5, 0, 5)
+KeyNotifTitle.BackgroundTransparency = 1
+KeyNotifTitle.Text = "⚡ Apertando Tecla"
+KeyNotifTitle.TextColor3 = Color3.fromRGB(0, 255, 127)
+KeyNotifTitle.TextSize = 13
+KeyNotifTitle.Font = Enum.Font.Code
+KeyNotifTitle.TextXAlignment = Enum.TextXAlignment.Left
+
+local KeyNotifDisplay = Instance.new("TextLabel", KeyNotifFrame)
+KeyNotifDisplay.Size = UDim2.new(1, -10, 0, 35)
+KeyNotifDisplay.Position = UDim2.new(0, 5, 0, 30)
+KeyNotifDisplay.BackgroundTransparency = 1
+KeyNotifDisplay.Text = "[ B ]"
+KeyNotifDisplay.TextColor3 = Color3.fromRGB(255, 100, 100)
+KeyNotifDisplay.TextSize = 28
+KeyNotifDisplay.Font = Enum.Font.GothamBold
+KeyNotifDisplay.TextXAlignment = Enum.TextXAlignment.Center
 
 -- [[ QUADRADO DE PESCA (ZONA) ]]
 local ZoneFrame = Instance.new("Frame", ScreenGui)
@@ -315,28 +380,34 @@ TPBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- Função para teleportar o jogador até o meteoro
+-- ✅ FUNÇÃO CORRIGIDA - TELEPORTE DIRETO PARA O METEORO
 local function teleportarParaMeteor()
     local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-    local meteor = game:GetService("Workspace"):FindFirstChild("MeteoriteFragmentModel")
+    local meteor = game.Workspace:FindFirstChild("MeteoriteFragmentModel")
 
     if hrp and meteor then
         DebugLabel.Text = "> Status: Teleporting to Meteor..."
-        local destino = meteor.PrimaryPart and meteor.PrimaryPart.CFrame or meteor.CFrame
-        local tempo = (hrp.Position - destino.Position).Magnitude / 60
-        local tween = TweenService:Create(hrp, TweenInfo.new(tempo, Enum.EasingStyle.Linear), {CFrame = destino})
-
-        local bv = Instance.new("BodyVelocity", hrp)
-        bv.Velocity = Vector3.new(0, 0, 0)
-        bv.MaxForce = Vector3.new(9e9, 9e9, 9e9)
-
-        tween:Play()
-        tween.Completed:Connect(function()
-            bv:Destroy()
-            DebugLabel.Text = "> Status: Reached Meteor"
-        end)
+        
+        -- ✅ ENCONTRA A POSIÇÃO DO METEORO CORRETAMENTE
+        local meteorPos = (meteor:FindFirstChild("PrimaryPart") or meteor:FindFirstChildWhichIsA("BasePart") or meteor).Position
+        
+        -- ✅ ADICIONA OFFSET PARA NÃO FICAR DENTRO DO METEORO
+        local destinoFinal = meteorPos + Vector3.new(10, 5, 10)
+        
+        -- ✅ TELEPORTE DIRETO E INSTANTÂNEO (MAIS CONFIÁVEL)
+        hrp.CFrame = CFrame.new(destinoFinal)
+        
+        task.wait(0.5)
+        DebugLabel.Text = "> Status: Reached Meteor"
+        print("[DEBUG] Teleportado para o meteoro em: " .. tostring(destinoFinal))
     else
         DebugLabel.Text = "> Status: Meteor not found or player not ready"
+        print("[DEBUG] HRP encontrada:", hrp ~= nil)
+        print("[DEBUG] Meteoro encontrado:", meteor ~= nil)
+        if meteor then
+            print("[DEBUG] Nome do meteoro:", meteor.Name)
+            print("[DEBUG] Posição do meteoro:", meteor.Position)
+        end
     end
 end
 
@@ -401,6 +472,43 @@ task.spawn(function()
                     task.wait(tempoReinicio)
                 end
             end
+        end
+    end
+end)
+
+-- ✅ LOOP MASTERY FARM (APERTA B, V, C, G, F, T EM ORDEM)
+task.spawn(function()
+    local teclasSequencia = {"B", "V", "C", "G", "F", "T"}
+    local indiceAtual = 1
+    local tempoEntreCliques = 0.5 -- Tempo entre apertos (em segundos)
+    
+    while true do
+        task.wait(0.1)
+        if _G.MasteryFarm then
+            KeyNotificationGui.Enabled = true
+            KeyNotifFrame.Visible = true
+            
+            local teclaAtual = teclasSequencia[indiceAtual]
+            
+            -- ✅ ATUALIZA A NOTIFICAÇÃO COM A TECLA ATUAL
+            KeyNotifDisplay.Text = "[ " .. teclaAtual .. " ]"
+            
+            -- ✅ SIMULA O APERTO DA TECLA
+            vim:SendKeyEvent(true, Enum.KeyCode[teclaAtual], false, game)
+            task.wait(0.1)
+            vim:SendKeyEvent(false, Enum.KeyCode[teclaAtual], false, game)
+            
+            print("[MASTERY FARM] Apertou: " .. teclaAtual)
+            
+            -- ✅ PASSA PARA A PRÓXIMA TECLA
+            indiceAtual = indiceAtual + 1
+            if indiceAtual > #teclasSequencia then
+                indiceAtual = 1 -- Volta ao começo
+            end
+            
+            task.wait(tempoEntreCliques)
+        else
+            KeyNotifFrame.Visible = false
         end
     end
 end)
