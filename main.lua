@@ -6,7 +6,7 @@ local vim = game:GetService("VirtualInputManager")
 local camera = game.Workspace.CurrentCamera
 local TweenService = game:GetService("TweenService")
 
-
+-- [[ INTERFACE ESTILO AZTUP HUB ]]
 local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
 
 -- Frame Principal (Design Escuro)
@@ -28,7 +28,7 @@ TitleBar.BorderSizePixel = 0
 local TitleText = Instance.new("TextLabel", TitleBar)
 TitleText.Size = UDim2.new(1, -10, 1, 0)
 TitleText.Position = UDim2.new(0, 8, 0, 0)
-TitleText.Text = "Order Hub | v1.0"
+TitleText.Text = "Aztup Hub | v3.52.6"
 TitleText.TextColor3 = Color3.fromRGB(180, 180, 180)
 TitleText.TextSize = 13
 TitleText.Font = Enum.Font.Code
@@ -41,7 +41,7 @@ Container.Size = UDim2.new(1, -20, 1, -40)
 Container.Position = UDim2.new(0, 10, 0, 35)
 Container.BackgroundTransparency = 1
 
-
+-- [[ COMPONENTES: BOTÕES ESTILO HUB ]]
 
 -- Botão Auto Fishing
 local FishBtn = Instance.new("TextButton", Container)
@@ -54,6 +54,21 @@ FishBtn.TextColor3 = Color3.fromRGB(255, 50, 50) -- Começa Vermelho (desativado
 FishBtn.TextSize = 14
 FishBtn.Font = Enum.Font.Code
 FishBtn.TextXAlignment = Enum.TextXAlignment.Left
+
+-- Toggle Auto Fishing
+FishBtn.MouseButton1Click:Connect(function()
+    _G.AutoFishing = not _G.AutoFishing
+    if _G.AutoFishing then
+        FishBtn.Text = "  ■ Auto Fishing (ON)"
+        FishBtn.TextColor3 = Color3.fromRGB(0, 255, 127)
+        DebugLabel.Text = "> Auto Fishing: ATIVO"
+        ZoneFrame.Visible = true
+    else
+        FishBtn.Text = "  ■ Auto Fishing"
+        FishBtn.TextColor3 = Color3.fromRGB(255, 50, 50)
+        DebugLabel.Text = "> Auto Fishing: DESATIVADO"
+    end
+end)
 
 -- Botão Teleport (Coordenadas da imagem)
 local TPBtn = Instance.new("TextButton", Container)
@@ -76,7 +91,7 @@ DebugLabel.BackgroundTransparency = 1
 DebugLabel.Text = "> Status: Idle"
 DebugLabel.TextColor3 = Color3.fromRGB(120, 120, 120)
 DebugLabel.TextSize = 12
-DebugTextXAlignment = Enum.TextXAlignment.Left
+DebugLabel.TextXAlignment = Enum.TextXAlignment.Left
 DebugLabel.Font = Enum.Font.Code
 
 -- [[ QUADRADO DE PESCA (ZONA) ]]
@@ -133,7 +148,7 @@ DropdownMain.Position = UDim2.new(0, 0, 0, 80)
 DropdownMain.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 DropdownMain.BorderSizePixel = 1
 DropdownMain.BorderColor3 = Color3.fromRGB(40, 40, 40)
-DropdownMain.Text = "  ▼ SELECT ITEM(CLICK TWICE TO TOGGLE OFF)"
+DropdownMain.Text = "  ▼ SELECIONAR ITEM ESP"
 DropdownMain.TextColor3 = Color3.fromRGB(200, 200, 200)
 DropdownMain.TextSize = 14
 DropdownMain.Font = Enum.Font.Code
@@ -279,9 +294,6 @@ DropdownMain.MouseButton1Click:Connect(function()
     end
 end)
 
--- Opcional: Ativar ESP automaticamente ao iniciar
-
-
 -- Lógica Teleporte (Tween atravessa paredes)
 TPBtn.MouseButton1Click:Connect(function()
     local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
@@ -345,7 +357,16 @@ MeteorTPBtn.MouseButton1Click:Connect(function()
     teleportarParaMeteor()
 end)
 
--- Loop de Pesca (Seu sistema original corrigido)
+-- ✅ FUNÇÃO CORRIGIDA DE CLIQUE (PARÂMETROS CORRETOS)
+local function clicarNaZona()
+    local centroX = ZoneFrame.AbsolutePosition.X + (ZoneFrame.AbsoluteSize.X / 2)
+    local centroY = ZoneFrame.AbsolutePosition.Y + (ZoneFrame.AbsoluteSize.Y / 2)
+    vim:SendMouseButtonEvent(centroX, centroY, 0, true, game, 0)
+    task.wait(0.1)
+    vim:SendMouseButtonEvent(centroX, centroY, 0, false, game, 0)
+end
+
+-- ✅ LOOP DE PESCA (CORRIGIDO - COMO A VERSÃO QUE FUNCIONAVA)
 task.spawn(function()
     while true do
         task.wait(0.5)
@@ -356,6 +377,7 @@ task.spawn(function()
                 task.wait(3.5)
                 local mordeu = false
                 while _G.AutoFishing and not mordeu do
+                    -- ✅ PROCURA EM TODOS OS FILHOS DO WORKSPACE
                     for _, obj in ipairs(game.Workspace:GetChildren()) do
                         if obj:IsA("BasePart") or obj:FindFirstChildOfClass("ParticleEmitter") then
                             local screenPos, onScreen = camera:WorldToScreenPoint(obj.Position)
@@ -363,6 +385,7 @@ task.spawn(function()
                                 local relX = screenPos.X - ZoneFrame.AbsolutePosition.X
                                 local relY = screenPos.Y - ZoneFrame.AbsolutePosition.Y
                                 if relX > 0 and relX < ZoneFrame.AbsoluteSize.X and relY > 0 and relY < ZoneFrame.AbsoluteSize.Y then
+                                    -- ✅ DETECÇÃO DE EFEITOS DE MORDIDA
                                     if obj.Name:lower():find("effect") or obj.Name:lower():find("splash") or obj.Name:lower():find("ring") then
                                         mordeu = true
                                         break
@@ -381,3 +404,5 @@ task.spawn(function()
         end
     end
 end)
+
+print("[AUTO FISHING] Script carregado com sucesso!")
