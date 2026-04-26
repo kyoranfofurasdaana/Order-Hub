@@ -6,7 +6,7 @@ local vim = game:GetService("VirtualInputManager")
 local camera = game.Workspace.CurrentCamera
 local TweenService = game:GetService("TweenService")
 
--- [[ INTERFACE ESTILO AZTUP HUB ]]
+
 local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
 
 -- Frame Principal (Design Escuro)
@@ -28,7 +28,7 @@ TitleBar.BorderSizePixel = 0
 local TitleText = Instance.new("TextLabel", TitleBar)
 TitleText.Size = UDim2.new(1, -10, 1, 0)
 TitleText.Position = UDim2.new(0, 8, 0, 0)
-TitleText.Text = "Aztup Hub | v3.52.6"
+TitleText.Text = "Order Hub | v1.0"
 TitleText.TextColor3 = Color3.fromRGB(180, 180, 180)
 TitleText.TextSize = 13
 TitleText.Font = Enum.Font.Code
@@ -41,7 +41,7 @@ Container.Size = UDim2.new(1, -20, 1, -40)
 Container.Position = UDim2.new(0, 10, 0, 35)
 Container.BackgroundTransparency = 1
 
--- [[ COMPONENTES: BOTÕES ESTILO HUB ]]
+
 
 -- Botão Auto Fishing
 local FishBtn = Instance.new("TextButton", Container)
@@ -133,7 +133,7 @@ DropdownMain.Position = UDim2.new(0, 0, 0, 80)
 DropdownMain.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 DropdownMain.BorderSizePixel = 1
 DropdownMain.BorderColor3 = Color3.fromRGB(40, 40, 40)
-DropdownMain.Text = "  ▼ SELECIONAR ITEM ESP"
+DropdownMain.Text = "  ▼ SELECT ITEM(CLICK TWICE TO TOGGLE OFF)"
 DropdownMain.TextColor3 = Color3.fromRGB(200, 200, 200)
 DropdownMain.TextSize = 14
 DropdownMain.Font = Enum.Font.Code
