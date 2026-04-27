@@ -7,6 +7,7 @@ local vim = game:GetService("VirtualInputManager")
 local camera = game.Workspace.CurrentCamera
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
 
 -- [[ INTERFACE ESTILO AZTUP HUB ]]
 local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
@@ -15,7 +16,7 @@ local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
 local MainFrame = Instance.new("Frame", ScreenGui)
 MainFrame.Size = UDim2.new(0, 350, 0, 300)
 MainFrame.Position = UDim2.new(0.5, -175, 0.5, -150)
-MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15) -- Fundo Aztup
+MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 MainFrame.BorderSizePixel = 1
 MainFrame.BorderColor3 = Color3.fromRGB(45, 45, 45)
 MainFrame.Active = true
@@ -30,7 +31,7 @@ TitleBar.BorderSizePixel = 0
 local TitleText = Instance.new("TextLabel", TitleBar)
 TitleText.Size = UDim2.new(1, -10, 1, 0)
 TitleText.Position = UDim2.new(0, 8, 0, 0)
-TitleText.Text = "Order Hub | v1.0"
+TitleText.Text = "Order Hub | v3.52.6"
 TitleText.TextColor3 = Color3.fromRGB(180, 180, 180)
 TitleText.TextSize = 13
 TitleText.Font = Enum.Font.Code
@@ -52,10 +53,21 @@ FishBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 FishBtn.BorderSizePixel = 1
 FishBtn.BorderColor3 = Color3.fromRGB(40, 40, 40)
 FishBtn.Text = "  ■ Auto Fishing"
-FishBtn.TextColor3 = Color3.fromRGB(255, 50, 50) -- Começa Vermelho (desativado)
+FishBtn.TextColor3 = Color3.fromRGB(255, 50, 50)
 FishBtn.TextSize = 14
 FishBtn.Font = Enum.Font.Code
 FishBtn.TextXAlignment = Enum.TextXAlignment.Left
+
+-- Debug Label (Status)
+local DebugLabel = Instance.new("TextLabel", Container)
+DebugLabel.Size = UDim2.new(1, 0, 0, 20)
+DebugLabel.Position = UDim2.new(0, 0, 1, -20)
+DebugLabel.BackgroundTransparency = 1
+DebugLabel.Text = "> Status: Idle"
+DebugLabel.TextColor3 = Color3.fromRGB(120, 120, 120)
+DebugLabel.TextSize = 12
+DebugLabel.TextXAlignment = Enum.TextXAlignment.Left
+DebugLabel.Font = Enum.Font.Code
 
 -- Toggle Auto Fishing
 FishBtn.MouseButton1Click:Connect(function()
@@ -80,7 +92,7 @@ TPBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 TPBtn.BorderSizePixel = 1
 TPBtn.BorderColor3 = Color3.fromRGB(40, 40, 40)
 TPBtn.Text = "  ■ TP to Water Position"
-TPBtn.TextColor3 = Color3.fromRGB(0, 255, 127) -- Verde Aztup
+TPBtn.TextColor3 = Color3.fromRGB(0, 255, 127)
 TPBtn.TextSize = 14
 TPBtn.Font = Enum.Font.Code
 TPBtn.TextXAlignment = Enum.TextXAlignment.Left
@@ -93,7 +105,7 @@ MasteryBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 MasteryBtn.BorderSizePixel = 1
 MasteryBtn.BorderColor3 = Color3.fromRGB(40, 40, 40)
 MasteryBtn.Text = "  ■ Mastery Farm"
-MasteryBtn.TextColor3 = Color3.fromRGB(255, 50, 50) -- Começa Vermelho
+MasteryBtn.TextColor3 = Color3.fromRGB(255, 50, 50)
 MasteryBtn.TextSize = 14
 MasteryBtn.Font = Enum.Font.Code
 MasteryBtn.TextXAlignment = Enum.TextXAlignment.Left
@@ -111,17 +123,6 @@ MasteryBtn.MouseButton1Click:Connect(function()
         DebugLabel.Text = "> Mastery Farm: DESATIVADO"
     end
 end)
-
--- Debug Label (Status)
-local DebugLabel = Instance.new("TextLabel", Container)
-DebugLabel.Size = UDim2.new(1, 0, 0, 20)
-DebugLabel.Position = UDim2.new(0, 0, 1, -20)
-DebugLabel.BackgroundTransparency = 1
-DebugLabel.Text = "> Status: Idle"
-DebugLabel.TextColor3 = Color3.fromRGB(120, 120, 120)
-DebugLabel.TextSize = 12
-DebugLabel.TextXAlignment = Enum.TextXAlignment.Left
-DebugLabel.Font = Enum.Font.Code
 
 -- [[ NOTIFICAÇÃO FLUTUANTE DE TECLAS (MASTERY FARM) ]]
 local KeyNotificationGui = Instance.new("ScreenGui", game.CoreGui)
@@ -165,7 +166,7 @@ ZoneFrame.Size = UDim2.new(0, 250, 0, 180)
 ZoneFrame.Position = UDim2.new(0.5, -125, 0.4, -90)
 ZoneFrame.BackgroundTransparency = 1 
 ZoneFrame.BorderSizePixel = 2
-ZoneFrame.BorderColor3 = Color3.fromRGB(0, 255, 127) -- Verde no quadrado também
+ZoneFrame.BorderColor3 = Color3.fromRGB(0, 255, 127)
 ZoneFrame.Visible = false
 
 local DragHandle = Instance.new("TextButton", ZoneFrame)
@@ -180,7 +181,6 @@ DragHandle.Draggable = true
 
 -- [[ CONFIGURAÇÃO DO DROPDOWN ESP ]]
 
--- Função para buscar itens disponíveis dinamicamente
 local function buscarItensDropaveis()
     local nomesUnicos = {}
     local jaAdicionados = {}
@@ -228,7 +228,7 @@ ListFrame.BorderColor3 = Color3.fromRGB(45, 45, 45)
 ListFrame.Visible = false
 ListFrame.ZIndex = 100
 ListFrame.ScrollBarThickness = 5
-ListFrame.ClipsDescendants = false -- Para debug visual
+ListFrame.ClipsDescendants = false
 ListFrame.CanvasSize = UDim2.new(0, 0, 0, #itensDisponiveis * 30 + 10)
 
 local UIList = Instance.new("UIListLayout")
@@ -264,7 +264,6 @@ local function ativarESP()
     ESP_Ativo = true
     local collectables = game.Workspace:FindFirstChild("Collectables")
     if collectables then
-        -- Destaca todos os objetos com o nome selecionado em todas as pastas
         for _, pasta in ipairs(collectables:GetChildren()) do
             if pasta:IsA("Folder") or pasta:IsA("Model") then
                 for _, item in ipairs(pasta:GetChildren()) do
@@ -274,7 +273,6 @@ local function ativarESP()
                 end
             end
         end
-        -- Destaca novos drops com o nome selecionado
         table.insert(ESP_Connections, collectables.DescendantAdded:Connect(function(desc)
             task.wait(0.1)
             if desc.Name == itemSelecionado then
@@ -297,21 +295,13 @@ local function desativarESP()
     DebugLabel.Text = "> ESP Desativado"
 end
 
--- 4. CRIAR ITENS DA LISTA
-
--- Função para popular a lista dinamicamente
 local function atualizarListaItens()
-    -- Limpa itens antigos
     for _, child in ipairs(ListFrame:GetChildren()) do
         if child:IsA("TextButton") then
             child:Destroy()
         end
     end
     itensDisponiveis = buscarItensDropaveis()
-    print("[DEBUG] Itens encontrados na busca:")
-    for _, nome in ipairs(itensDisponiveis) do
-        print("  - " .. nome)
-    end
     ListFrame.CanvasSize = UDim2.new(0, 0, 0, #itensDisponiveis * 30 + 10)
     for _, nome in ipairs(itensDisponiveis) do
         local ItemBtn = Instance.new("TextButton")
@@ -344,12 +334,10 @@ local function atualizarListaItens()
     end
 end
 
--- 5. LÓGICA DE ABRIR/FECHAR
 DropdownMain.MouseButton1Click:Connect(function()
     ListFrame.Visible = not ListFrame.Visible
     if ListFrame.Visible then
         atualizarListaItens()
-        -- Posição relativa ao MainFrame: logo abaixo do DropdownMain
         ListFrame.Position = UDim2.new(
             DropdownMain.Position.X.Scale,
             DropdownMain.Position.X.Offset,
@@ -359,7 +347,6 @@ DropdownMain.MouseButton1Click:Connect(function()
     end
 end)
 
--- Lógica Teleporte (Tween atravessa paredes)
 TPBtn.MouseButton1Click:Connect(function()
     local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
     if hrp then
@@ -380,38 +367,80 @@ TPBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- ✅ FUNÇÃO CORRIGIDA - TELEPORTE DIRETO PARA O METEORO
-local function teleportarParaMeteor()
+-- ✅ FUNÇÃO CORRIGIDA - TELEPORTE PARA METEORO (NOME CORRETO)
+local function teleportarParaMeteoro()
+    print("\n[METEOR TP] ========== INICIANDO TELEPORTE ==========")
+    
     local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-    local meteor = game.Workspace:FindFirstChild("MeteoriteFragmentModel")
-
-    if hrp and meteor then
-        DebugLabel.Text = "> Status: Teleporting to Meteor..."
-        
-        -- ✅ ENCONTRA A POSIÇÃO DO METEORO CORRETAMENTE
-        local meteorPos = (meteor:FindFirstChild("PrimaryPart") or meteor:FindFirstChildWhichIsA("BasePart") or meteor).Position
-        
-        -- ✅ ADICIONA OFFSET PARA NÃO FICAR DENTRO DO METEORO
-        local destinoFinal = meteorPos + Vector3.new(10, 5, 10)
-        
-        -- ✅ TELEPORTE DIRETO E INSTANTÂNEO (MAIS CONFIÁVEL)
-        hrp.CFrame = CFrame.new(destinoFinal)
-        
-        task.wait(0.5)
-        DebugLabel.Text = "> Status: Reached Meteor"
-        print("[DEBUG] Teleportado para o meteoro em: " .. tostring(destinoFinal))
-    else
-        DebugLabel.Text = "> Status: Meteor not found or player not ready"
-        print("[DEBUG] HRP encontrada:", hrp ~= nil)
-        print("[DEBUG] Meteoro encontrado:", meteor ~= nil)
-        if meteor then
-            print("[DEBUG] Nome do meteoro:", meteor.Name)
-            print("[DEBUG] Posição do meteoro:", meteor.Position)
-        end
+    
+    print("[METEOR TP] HRP encontrada:", hrp ~= nil)
+    if hrp then
+        print("[METEOR TP] Posição do player:", tostring(hrp.Position))
     end
+    
+    if not hrp then
+        DebugLabel.Text = "> Status: Player not ready"
+        print("[METEOR TP] ❌ HumanoidRootPart não encontrado")
+        print("[METEOR TP] ==========================================\n")
+        return
+    end
+    
+    DebugLabel.Text = "> Status: Searching for meteor..."
+    print("[METEOR TP] Procurando meteoro...")
+    
+    local meteor = nil
+    
+    print("[METEOR TP] [ETAPA 1] Procurando MeteoriteFragmentModel...")
+    meteor = game.Workspace:FindFirstChild("MeteoriteFragmentModel")
+    print("[METEOR TP] MeteoriteFragmentModel encontrada:", meteor ~= nil)
+    
+    if meteor then
+        print("[METEOR TP] ✅ METEOR ENCONTRADO!")
+        print("[METEOR TP] Nome:", meteor.Name)
+        print("[METEOR TP] Tipo:", meteor.ClassName)
+        print("[METEOR TP] Tem PrimaryPart:", meteor.PrimaryPart ~= nil)
+        
+        local meteorPos = nil
+        
+        if meteor.PrimaryPart then
+            meteorPos = meteor.PrimaryPart.Position
+            print("[METEOR TP] Usando PrimaryPart para posição")
+        else
+            for _, obj in ipairs(meteor:GetDescendants()) do
+                if obj:IsA("BasePart") then
+                    meteorPos = obj.Position
+                    print("[METEOR TP] Usando BasePart para posição:", obj.Name)
+                    break
+                end
+            end
+        end
+        
+        if meteorPos then
+            print("[METEOR TP] Posição do meteoro:", tostring(meteorPos))
+            
+            local destinoFinal = meteorPos + Vector3.new(15, 10, 15)
+            print("[METEOR TP] Posição final (com offset):", tostring(destinoFinal))
+            
+            print("[METEOR TP] Teleportando...")
+            hrp.CFrame = CFrame.new(destinoFinal)
+            
+            task.wait(0.5)
+            
+            print("[METEOR TP] Nova posição do player:", tostring(hrp.Position))
+            print("[METEOR TP] ✅ TELEPORTE CONCLUÍDO!")
+            DebugLabel.Text = "> Status: Reached Meteor ✅"
+        else
+            print("[METEOR TP] ❌ Não conseguiu encontrar posição do meteoro")
+            DebugLabel.Text = "> Status: Meteor position error!"
+        end
+    else
+        print("[METEOR TP] ❌ METEOR NÃO ENCONTRADO!")
+        DebugLabel.Text = "> Status: Meteor NOT found! ❌"
+    end
+    
+    print("[METEOR TP] ========== FIM DO TELEPORTE ==========\n")
 end
 
--- Botão para teleportar para o meteoro
 local MeteorTPBtn = Instance.new("TextButton", Container)
 MeteorTPBtn.Size = UDim2.new(1, 0, 0, 30)
 MeteorTPBtn.Position = UDim2.new(0, 0, 0, 120)
@@ -425,10 +454,9 @@ MeteorTPBtn.Font = Enum.Font.Code
 MeteorTPBtn.TextXAlignment = Enum.TextXAlignment.Left
 
 MeteorTPBtn.MouseButton1Click:Connect(function()
-    teleportarParaMeteor()
+    teleportarParaMeteoro()
 end)
 
--- ✅ FUNÇÃO CORRIGIDA DE CLIQUE (PARÂMETROS CORRETOS)
 local function clicarNaZona()
     local centroX = ZoneFrame.AbsolutePosition.X + (ZoneFrame.AbsoluteSize.X / 2)
     local centroY = ZoneFrame.AbsolutePosition.Y + (ZoneFrame.AbsoluteSize.Y / 2)
@@ -437,7 +465,7 @@ local function clicarNaZona()
     vim:SendMouseButtonEvent(centroX, centroY, 0, false, game, 0)
 end
 
--- ✅ LOOP DE PESCA (CORRIGIDO - COMO A VERSÃO QUE FUNCIONAVA)
+-- ✅ LOOP AUTO FISHING
 task.spawn(function()
     while true do
         task.wait(0.5)
@@ -448,7 +476,6 @@ task.spawn(function()
                 task.wait(3.5)
                 local mordeu = false
                 while _G.AutoFishing and not mordeu do
-                    -- ✅ PROCURA EM TODOS OS FILHOS DO WORKSPACE
                     for _, obj in ipairs(game.Workspace:GetChildren()) do
                         if obj:IsA("BasePart") or obj:FindFirstChildOfClass("ParticleEmitter") then
                             local screenPos, onScreen = camera:WorldToScreenPoint(obj.Position)
@@ -456,7 +483,6 @@ task.spawn(function()
                                 local relX = screenPos.X - ZoneFrame.AbsolutePosition.X
                                 local relY = screenPos.Y - ZoneFrame.AbsolutePosition.Y
                                 if relX > 0 and relX < ZoneFrame.AbsoluteSize.X and relY > 0 and relY < ZoneFrame.AbsoluteSize.Y then
-                                    -- ✅ DETECÇÃO DE EFEITOS DE MORDIDA
                                     if obj.Name:lower():find("effect") or obj.Name:lower():find("splash") or obj.Name:lower():find("ring") then
                                         mordeu = true
                                         break
@@ -476,11 +502,11 @@ task.spawn(function()
     end
 end)
 
--- ✅ LOOP MASTERY FARM (APERTA B, V, C, G, F, T EM ORDEM)
+-- ✅ LOOP MASTERY FARM
 task.spawn(function()
     local teclasSequencia = {"B", "V", "C", "G", "F", "T"}
     local indiceAtual = 1
-    local tempoEntreCliques = 0.5 -- Tempo entre apertos (em segundos)
+    local tempoEntreCliques = 0.5
     
     while true do
         task.wait(0.1)
@@ -490,20 +516,17 @@ task.spawn(function()
             
             local teclaAtual = teclasSequencia[indiceAtual]
             
-            -- ✅ ATUALIZA A NOTIFICAÇÃO COM A TECLA ATUAL
             KeyNotifDisplay.Text = "[ " .. teclaAtual .. " ]"
             
-            -- ✅ SIMULA O APERTO DA TECLA
             vim:SendKeyEvent(true, Enum.KeyCode[teclaAtual], false, game)
             task.wait(0.1)
             vim:SendKeyEvent(false, Enum.KeyCode[teclaAtual], false, game)
             
             print("[MASTERY FARM] Apertou: " .. teclaAtual)
             
-            -- ✅ PASSA PARA A PRÓXIMA TECLA
             indiceAtual = indiceAtual + 1
             if indiceAtual > #teclasSequencia then
-                indiceAtual = 1 -- Volta ao começo
+                indiceAtual = 1
             end
             
             task.wait(tempoEntreCliques)
@@ -513,4 +536,40 @@ task.spawn(function()
     end
 end)
 
+-- ✅ ANTI-AFK NATIVO
+task.spawn(function()
+    print("[ANTI-AFK] Sistema iniciado!")
+    local ultimaAtividadeDoPlayer = tick()
+    
+    while true do
+        task.wait(1)
+        
+        local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
+            
+            if humanoid and humanoid.MoveVector ~= Vector3.new(0, 0, 0) then
+                ultimaAtividadeDoPlayer = tick()
+            end
+            
+            if tick() - ultimaAtividadeDoPlayer > 300 then
+                print("[ANTI-AFK] ⚠️ Detectado AFK! Movendo player...")
+                
+                vim:SendKeyEvent(true, Enum.KeyCode.W, false, game)
+                task.wait(0.5)
+                vim:SendKeyEvent(false, Enum.KeyCode.W, false, game)
+                task.wait(0.3)
+                
+                vim:SendKeyEvent(true, Enum.KeyCode.S, false, game)
+                task.wait(0.5)
+                vim:SendKeyEvent(false, Enum.KeyCode.S, false, game)
+                
+                ultimaAtividadeDoPlayer = tick()
+                print("[ANTI-AFK] ✅ Movimento executado!")
+            end
+        end
+    end
+end)
+
 print("[AUTO FISHING] Script carregado com sucesso!")
+print("[ANTI-AFK] ✅ Sistema Anti-AFK ativado automaticamente!")
